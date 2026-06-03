@@ -1,0 +1,8 @@
+# data/ — 运行时数据目录
+
+此目录存放运行时产生的数据文件：
+- history.json     创作历史记录
+- preference.json  用户偏好
+- app.log          运行日志
+
+（此文件确保目录被 git 追踪）
