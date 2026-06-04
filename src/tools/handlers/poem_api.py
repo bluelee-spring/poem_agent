@@ -84,8 +84,9 @@ async def handle_get_references(arguments: dict[str, Any]) -> dict[str, Any]:
 
     if ref_type in ("rhyme", "all"):
         try:
-            rhyme_names = await api.get_rhyme_names()
-            result["rhyme_categories"] = rhyme_names[:30]  # 截取前 30 个
+            rhyme_tree = await api.get_rhyme_tree()
+            # 提取韵部树摘要：每层最多展示一个节点的children以控制长度
+            result["rhyme_tree"] = _summarize_rhyme_tree(rhyme_tree, max_top_nodes=15, max_child_nodes=8)
         except Exception as e:
             result["rhyme_error"] = str(e)
 
@@ -100,6 +101,29 @@ async def handle_get_references(arguments: dict[str, Any]) -> dict[str, Any]:
             result["scene_error"] = str(e)
 
     return result
+
+
+def _summarize_rhyme_tree(tree: list, max_top_nodes: int = 15, max_child_nodes: int = 8) -> list[dict]:
+    """将韵部树摘要为 LLM 可读的结构
+
+    保留顶层节点（如上平声、下平声等）和其子韵部名，
+    控制每个节点的 children 数量避免 token 爆炸。
+    """
+    summary = []
+    for node in tree[:max_top_nodes]:
+        item = {
+            "category": node.name,           # 如"上平声"
+            "description": node.description or "",
+        }
+        children = node.children[:max_child_nodes]
+        item["rhymes"] = [
+            {"name": c.name, "desc": c.description or "", "chars": (c.characters or "")[:30]}
+            for c in children
+        ]
+        if len(node.children) > max_child_nodes:
+            item["truncated"] = f"（共{len(node.children)}个，已截取前{max_child_nodes}个）"
+        summary.append(item)
+    return summary
 
 
 def _extract_scene_names(tree: dict, max_depth: int = 2) -> list[str]:

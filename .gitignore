@@ -28,5 +28,8 @@ Thumbs.db
 output/
 *.log
 
+# 设计文档（本地不推送）
+QA.md
+
 # 日志
 *.log

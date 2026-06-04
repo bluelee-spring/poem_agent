@@ -100,6 +100,18 @@ class PoemController:
         """
         prompt = system_prompt or SYSTEM_PROMPT
 
+        # 注入当前日期
+        from datetime import datetime
+        now = datetime.now()
+        date_info = (
+            f"\n\n## 当前时间\n"
+            f"现在是 {now.year} 年 {now.month} 月 {now.day} 日，"
+            f"星期{'一二三四五六日'[now.weekday()]}，{now.strftime('%H:%M')}。"
+            f"\n当前季节为{'春夏秋冬'[(now.month % 12) // 3]}季。"
+            f"\n搜索热点、判断时令请以此时刻为基准。"
+        )
+        prompt = prompt + date_info
+
         # 构建初始消息
         messages: list[Message] = [
             Message(role="system", content=prompt),
