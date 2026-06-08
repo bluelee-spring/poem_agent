@@ -44,7 +44,7 @@ async def cmd_agent(topic: str | None, verbose: bool):
     controller = PoemController()
 
     if topic is None:
-        print("诗千家智能体 v0.2")
+        print("诗千家智能体 v0.2.2")
         print("输入 'exit' 或 'quit' 退出\n")
         while True:
             try:

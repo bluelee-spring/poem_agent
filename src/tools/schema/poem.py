@@ -158,6 +158,36 @@ GENERATE_POEM_SCHEMA = {
 # ============================================================
 # 参考数据查询工具
 # ============================================================
+ANALYZE_POEM_SCHEMA = {
+    "type": "function",
+    "function": {
+        "name": "analyze_poem",
+        "description": (
+            "调用搜韵网 API 进行律诗/绝句格律校验。检查平仄、押韵、对仗是否合规，"
+            "返回逐句逐字的平仄分析和韵脚标记。适用于五言/七言绝句、律诗、排律。"
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "description": "待校验的诗歌内容，每句一行",
+                },
+                "rhyme": {
+                    "type": "string",
+                    "description": "使用的韵书（与 generate_poem 的 rhyme 一致），默认平水韵",
+                },
+                "self_pingze_balance": {
+                    "type": "boolean",
+                    "description": "是否启用平仄自平衡（拗救检测），默认 true",
+                    "default": True,
+                },
+            },
+            "required": ["content"],
+        },
+    },
+}
+
 GET_REFERENCES_SCHEMA = {
     "type": "function",
     "function": {

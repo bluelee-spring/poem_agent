@@ -26,6 +26,7 @@ from src.tools.handlers import (
     register_poem_handlers,
     register_search_handlers,
     register_storage_handlers,
+    register_metrics_handlers,
 )
 from src.config.prompts import SYSTEM_PROMPT
 from src.config import config
@@ -80,6 +81,7 @@ class PoemController:
         register_poem_handlers(reg)
         register_search_handlers(reg)
         register_storage_handlers(reg)
+        register_metrics_handlers(reg)
         return reg
 
     async def run(
@@ -248,6 +250,6 @@ def _serialize_result(result: dict) -> str:
 
     serialized = json.dumps(data, ensure_ascii=False, indent=2)
     # 限制长度避免超出 context
-    if len(serialized) > 3000:
-        serialized = serialized[:3000] + "\n...(结果已截断)"
+    if len(serialized) > 1500:
+        serialized = serialized[:1500] + "\n...(结果已截断)"
     return serialized
