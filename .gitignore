@@ -31,5 +31,9 @@ output/
 # 设计文档（本地不推送）
 QA.md
 
+# CodeWhale 本地数据
+.deepseek/
+
 # 日志
 *.log
+
