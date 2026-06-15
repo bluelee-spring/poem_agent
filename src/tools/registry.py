@@ -4,10 +4,6 @@ import json
 import logging
 from typing import Any, Callable, Optional
 
-from src.tools.schema.poem import GENERATE_POEM_SCHEMA, GET_REFERENCES_SCHEMA
-from src.tools.schema.search import SEARCH_HOT_TOPICS_SCHEMA, WEB_SEARCH_SCHEMA
-from src.tools.schema.storage import SAVE_POEM_SCHEMA, GET_HISTORY_SCHEMA
-
 logger = logging.getLogger(__name__)
 
 # Handler 类型：接收 arguments dict，返回结果 dict
@@ -109,21 +105,9 @@ def _truncate_args(args: dict, max_len: int = 200) -> str:
 
 
 def create_default_registry() -> ToolRegistry:
-    """创建默认的工具注册中心（注册所有内置工具，handler 初始为空）
+    """创建空的工具注册中心
 
-    注意: handler 需要在对应的 handler 模块实现后通过 register() 或
-    register_handlers() 补充注册。
+    Schema 和 handler 由各个 handler 模块的 register_handlers() 统一注册，
+    此处不再预注册占位 handler。
     """
-    registry = ToolRegistry()
-
-    # 注册所有 schema（handler 先设为占位函数）
-    _placeholder = lambda args: {"error": "handler 尚未实现"}
-
-    registry.register(GENERATE_POEM_SCHEMA, _placeholder)
-    registry.register(GET_REFERENCES_SCHEMA, _placeholder)
-    registry.register(SEARCH_HOT_TOPICS_SCHEMA, _placeholder)
-    registry.register(WEB_SEARCH_SCHEMA, _placeholder)
-    registry.register(SAVE_POEM_SCHEMA, _placeholder)
-    registry.register(GET_HISTORY_SCHEMA, _placeholder)
-
-    return registry
+    return ToolRegistry()

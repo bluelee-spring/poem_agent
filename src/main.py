@@ -28,9 +28,10 @@ if sys.platform == "win32":
 load_dotenv()
 
 
-async def cmd_agent(topic: str | None, verbose: bool):
+async def cmd_agent(topic: str | None, skill_name: str | None, verbose: bool):
     """LLM 驱动的智能创作"""
     from src.agent.controller import PoemController
+    from src.skills import get_skill_registry
     from src.config import config
 
     # 前置检查
@@ -41,11 +42,14 @@ async def cmd_agent(topic: str | None, verbose: bool):
         print("[!] 未配置 LLM_API_KEY，请在 .env 中设置")
         return
 
-    controller = PoemController()
+    # 显式指定 Skill 或通用模式
+    skill = get_skill_registry().get(skill_name) if skill_name else None
+    controller = PoemController(skill=skill)
 
     if topic is None:
         print("诗千家智能体 v0.2.2")
-        print("输入 'exit' 或 'quit' 退出\n")
+        print("输入 'exit' 退出 | 'reset' 清空上下文\n")
+        first_turn = True
         while True:
             try:
                 user_input = input("\n> ").strip()
@@ -57,7 +61,16 @@ async def cmd_agent(topic: str | None, verbose: bool):
             if user_input.lower() in ("exit", "quit", "q"):
                 print("再见～")
                 break
-            await controller.run(user_input, verbose=verbose)
+            if user_input.lower() == "reset":
+                controller._messages = []
+                first_turn = True
+                print("[OK] 上下文已清空，开始新会话。")
+                continue
+            if first_turn:
+                await controller.run(user_input, verbose=verbose)
+                first_turn = False
+            else:
+                await controller.run(user_input, continue_session=True, verbose=verbose)
     else:
         result = await controller.run(topic, verbose=verbose)
         if not result.success:
@@ -97,11 +110,10 @@ async def cmd_check():
 
 async def cmd_hot(limit: int):
     """采集热点话题"""
-    from src.collectors.hot_topics import HotTopicCollector
+    from src.tools.handlers.search import fetch_hot_topics
 
-    collector = HotTopicCollector()
     print("正在采集热点...")
-    topics = await collector.collect_all(limit=limit)
+    topics = await fetch_hot_topics(limit=limit)
 
     if not topics:
         print("未获取到热点")
@@ -141,6 +153,7 @@ def main():
     # agent（默认命令）
     agent_parser = sub.add_parser("agent", help="LLM 驱动的智能创作（默认）")
     agent_parser.add_argument("--topic", "-t", help="创作主题")
+    agent_parser.add_argument("--skill", "-s", help="指定要加载的 Skill（如 hot_topic_poem）")
     agent_parser.add_argument("--quiet", "-q", action="store_true", help="简洁模式")
 
     sub.add_parser("auth", help="获取 OAuth 登录链接")
@@ -165,8 +178,9 @@ def main():
         asyncio.run(cmd_history(args.limit, args.topic))
     elif args.command == "agent" or args.command is None:
         topic = getattr(args, "topic", None)
+        skill_name = getattr(args, "skill", None)
         verbose = not getattr(args, "quiet", False)
-        asyncio.run(cmd_agent(topic, verbose))
+        asyncio.run(cmd_agent(topic, skill_name, verbose))
     else:
         parser.print_help()
 
