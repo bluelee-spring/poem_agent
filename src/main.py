@@ -2,6 +2,7 @@
 
 命令:
   agent    LLM 驱动的智能创作（默认）
+  feishu   启动飞书 Bot（长连接模式）
   auth     获取 OAuth 登录链接
   check    检查认证状态
   hot      采集热点话题
@@ -77,6 +78,25 @@ async def cmd_agent(topic: str | None, skill_name: str | None, verbose: bool):
             print(f"[!] 执行失败: {result.error}")
 
 
+async def cmd_feishu(mode: str = "ws"):
+    """启动飞书 Bot"""
+    from src.feishu import FeishuBot
+    from src.config import config
+
+    if not config.LLM_API_KEY:
+        print("[!] 未配置 LLM_API_KEY")
+        return
+
+    bot = FeishuBot()
+    mode_labels = {"ws": "WebSocket 长连接", "webhook": "HTTP Webhook", "both": "长连接 + 定时任务"}
+    print(f"飞书 Bot 启动中（{mode_labels.get(mode, mode)}模式）...")
+    print("按 Ctrl+C 停止\n")
+    try:
+        await bot.run(mode=mode)
+    except KeyboardInterrupt:
+        print("\n飞书 Bot 已停止。")
+
+
 async def cmd_auth():
     """获取 OAuth 登录链接"""
     from src.api.auth import AuthManager
@@ -122,6 +142,11 @@ async def cmd_hot(limit: int):
     for t in topics:
         heat_str = f"({t.heat})" if t.heat else ""
         print(f"  [{t.source}] #{t.rank} {t.title} {heat_str}")
+        if t.summary:
+            # 摘要缩进显示，方便阅读
+            print(f"    摘要: {t.summary[:120]}{'...' if len(t.summary) > 120 else ''}")
+        if t.url:
+            print(f"    链接: {t.url}")
 
 
 async def cmd_history(limit: int, topic: str | None):
@@ -156,6 +181,10 @@ def main():
     agent_parser.add_argument("--skill", "-s", help="指定要加载的 Skill（如 hot_topic_poem）")
     agent_parser.add_argument("--quiet", "-q", action="store_true", help="简洁模式")
 
+    feishu_parser = sub.add_parser("feishu", help="启动飞书 Bot")
+    feishu_parser.add_argument("--mode", "-m", default="ws",
+                               choices=["ws", "webhook", "both"],
+                               help="ws=长连接 webhook=HTTP回调 both=长连接+定时任务")
     sub.add_parser("auth", help="获取 OAuth 登录链接")
     sub.add_parser("check", help="检查认证状态")
 
@@ -168,7 +197,10 @@ def main():
 
     args = parser.parse_args()
 
-    if args.command == "auth":
+    if args.command == "feishu":
+        mode = getattr(args, "mode", "ws")
+        asyncio.run(cmd_feishu(mode))
+    elif args.command == "auth":
         asyncio.run(cmd_auth())
     elif args.command == "check":
         asyncio.run(cmd_check())
