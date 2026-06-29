@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 logger = logging.getLogger(__name__)
 
 # 配置
-SCHEDULE_TIME = os.getenv("FEISHU_SCHEDULE_TIME", "08:00")  # HH:MM
+SCHEDULE_TIME = os.getenv("FEISHU_SCHEDULE_TIME", "10:00")  # HH:MM
 SCHEDULE_ENABLED = os.getenv("FEISHU_SCHEDULE_ENABLED", "true").lower() != "false"
 
 
